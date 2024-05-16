@@ -29,13 +29,13 @@ fn expand(st: &Item) -> Result<TokenStream2> {
 
                 let output = &bf.output;
                 quote! {
-                    #vis fn unwrap_run(func:&str,#(#args_name:#args_ty),*) #output{
+                    pub fn unwrap_run(func:&str,#(#args_name:#args_ty),*) #output{
                         // let _register=#static_ident.get().unwrap().lock().unwrap();
                         // let f=_register.get(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
                         let f=Self::get_fn(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
                         f(#(#args_name),*)
                     }
-                    #vis fn get_fn(func:&str) -> Option<Box<#ty>>{
+                    pub fn get_fn(func:&str) -> Option<Box<#ty>>{
                         let _register=#static_ident.get().unwrap().lock().unwrap();
                         _register.get(func).map(|x|x.clone())
                     }
