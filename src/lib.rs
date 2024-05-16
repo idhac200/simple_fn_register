@@ -18,6 +18,8 @@ fn expand(st: &Item) -> Result<TokenStream2> {
         let static_ident = get_static_ident(ident);
         let ty = t.ty.clone();
 
+        let vis = &t.vis;
+
         let impl_func = match *ty.clone() {
             syn::Type::BareFn(bf) => {
                 let args_ty = bf.inputs.iter().map(|a| &a.ty);
@@ -27,13 +29,13 @@ fn expand(st: &Item) -> Result<TokenStream2> {
 
                 let output = &bf.output;
                 quote! {
-                    fn unwrap_run(func:&str,#(#args_name:#args_ty),*) #output{
+                    #vis fn unwrap_run(func:&str,#(#args_name:#args_ty),*) #output{
                         // let _register=#static_ident.get().unwrap().lock().unwrap();
                         // let f=_register.get(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
                         let f=Self::get_fn(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
                         f(#(#args_name),*)
                     }
-                    fn get_fn(func:&str) -> Option<Box<#ty>>{
+                    #vis fn get_fn(func:&str) -> Option<Box<#ty>>{
                         let _register=#static_ident.get().unwrap().lock().unwrap();
                         _register.get(func).map(|x|x.clone())
                     }
@@ -45,7 +47,7 @@ fn expand(st: &Item) -> Result<TokenStream2> {
             }
         };
 
-        let vis = &t.vis;
+
 
         return Ok(quote! {
             static #static_ident:std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String,std::boxed::Box<#ty>>>>=std::sync::OnceLock::new();
