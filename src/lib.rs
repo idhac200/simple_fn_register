@@ -27,10 +27,15 @@ fn expand(st: &Item) -> Result<TokenStream2> {
 
                 let output = &bf.output;
                 quote! {
-                    fn run(func:&str,#(#args_name:#args_ty),*) #output{
-                        let _register=#static_ident.get().unwrap().lock().unwrap();
-                        let f=_register.get(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
+                    fn unwrap_run(func:&str,#(#args_name:#args_ty),*) #output{
+                        // let _register=#static_ident.get().unwrap().lock().unwrap();
+                        // let f=_register.get(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
+                        let f=Self::get_fn(func).expect(format!("fn {} not found in {}", func,#ident_name).as_str());
                         f(#(#args_name),*)
+                    }
+                    fn get_fn(func:&str) -> Option<Box<#ty>>{
+                        let _register=#static_ident.get().unwrap().lock().unwrap();
+                        _register.get(func).map(|x|x.clone())
                     }
                 }
             }
@@ -85,7 +90,7 @@ fn register_fn_expand(st: &Item, args: &Ident) -> TokenStream2 {
             #[ctor::ctor]
             fn #register_fn_ident(){
                 let _register = #static_ident.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
-                _register.lock().unwrap().insert(#fn_name.to_string(), Box::new(#fn_ident));
+                _register.lock().unwrap().insert(#fn_name.to_string(), std::boxed::Box::new(#fn_ident));
             }
         });
     } else {
