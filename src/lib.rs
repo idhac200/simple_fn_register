@@ -90,7 +90,7 @@ fn register_fn_expand(st: &Item, args: &Ident) -> TokenStream2 {
         let register_fn_ident = format_ident!("__register_{}",fn_ident);
         ret.extend(quote! {
             #[small_ctor::ctor]
-            fn #register_fn_ident(){
+            unsafe fn #register_fn_ident(){
                 let _register = #static_ident.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
                 _register.lock().unwrap().insert(#fn_name.to_string(), std::boxed::Box::new(#fn_ident));
             }
